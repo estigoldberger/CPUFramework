@@ -19,7 +19,29 @@ namespace CPUFramework
             cmd.CommandText = sqlstatement;
             var dr = cmd.ExecuteReader();
             dt.Load(dr);
+            SetAllColumnAllowNulls(dt);
             return dt;
+        }
+        public static void ExecuteSQL(string sqlstatement)
+        {
+            GetDataTable(sqlstatement);
+        }
+        private static void SetAllColumnAllowNulls(DataTable dt)
+        {
+        foreach(DataColumn c in dt.Columns)
+            {
+                c.AllowDBNull = true;
+            }
+        }
+        public static void DebugPrintDataTable(DataTable dt)
+        {
+        foreach(DataRow r in dt.Rows)
+            {
+                foreach(DataColumn c in dt.Columns)
+                {
+                    Debug.Print(c.ColumnName + "=" + r[c.ColumnName].ToString());
+                }
+            }
         }
     }
 }
