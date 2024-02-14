@@ -21,5 +21,9 @@ namespace CPUFramework
             dt.Load(dr);
             return dt;
         }
+        public static void ExecuteSQL(string sqlstatement)
+        {
+            GetDataTable(sqlstatement);
+        }
     }
 }
