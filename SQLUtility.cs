@@ -27,6 +27,7 @@ namespace CPUFramework
         {
             GetDataTable(sqlstatement);
         }
+        
         public static int GetFirstColumnFirstRowValue(string sql)
         {
             int n = 0;
