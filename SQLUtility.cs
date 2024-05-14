@@ -20,12 +20,22 @@ namespace CPUFramework
             }
             return cmd;
         }
+    
 
         public static DataTable GetDataTable(SqlCommand cmd)
         {
             return DoExecuteSql(cmd, true);
         }
-        public static void SaveDataRow(DataRow dr, string sprocname)
+        public static void SaveDataTable(DataTable dt, string sprocname)
+        {
+         var rows=   dt.Select("", "", DataViewRowState.Added | DataViewRowState.ModifiedCurrent);
+            foreach(DataRow r in rows)
+            {
+                SaveDataRow(r, sprocname, false);
+            }
+            dt.AcceptChanges();
+        }
+        public static void SaveDataRow(DataRow dr, string sprocname, bool acceptchanges=true)
         {
             SqlCommand cmd = GetSqlCommand(sprocname);
             foreach(DataColumn col in dr.Table.Columns )
@@ -37,6 +47,7 @@ namespace CPUFramework
                 }
             }
             DoExecuteSql(cmd, false);
+            
             foreach(SqlParameter sp in cmd.Parameters)
             {
                 if (sp.Direction== ParameterDirection.InputOutput)
@@ -47,7 +58,13 @@ namespace CPUFramework
                         dr[columname] = sp.Value;
                     }
                 }
+
             }
+            if (acceptchanges == true)
+            {
+                dr.Table.AcceptChanges();
+            }
+           
         }
         private static DataTable DoExecuteSql(SqlCommand cmd, bool loadtable )
         {
@@ -78,7 +95,7 @@ namespace CPUFramework
                 }
                 
             }
-            SetAllColumnsAllowNull(dt);
+            SetAllColumnsProperties(dt);
             return dt;
         }
         private static void CheckReturnValue(SqlCommand cmd)
@@ -146,12 +163,22 @@ namespace CPUFramework
             }
             return n;
         }
-        public static void SetAllColumnsAllowNull(DataTable dt)
+        public static void SetAllColumnsProperties(DataTable dt)
         {
             foreach(DataColumn c in dt.Columns)
             {
                 c.AllowDBNull = true;
+                c.AutoIncrement = false;
             }
+        }
+        public static bool TableHasChanges(DataTable dt)
+        {
+            bool b = false;
+            if(dt.GetChanges() != null)
+            {
+                b = true;
+            }
+            return b;
         }
         public static string GetSQL(SqlCommand cmd)
         {
@@ -198,6 +225,7 @@ namespace CPUFramework
             string origmsg = msg;
             string prefix = "ck_";
             string msgend = "";
+            string notnullprefix = "Cannot insert the value NULL into column '";
             if (msg.Contains(prefix) == false)
             {
                 if (msg.Contains("u_") )
@@ -219,6 +247,11 @@ namespace CPUFramework
                     prefix = "f_";
                     
                 
+                }
+                else if (msg.Contains(notnullprefix))
+                {
+                    prefix = notnullprefix;
+                    msgend = " cannot be blank.";
                 }
             }
             if (msg.Contains(prefix))
@@ -259,6 +292,34 @@ namespace CPUFramework
             {
                 throw new Exception(cmd.CommandText + ": " + ex.Message, ex);
             }
+        }
+        public static int GetValueFromFirstRowAsInt(DataTable tbl, string columname)
+        {
+            int value = 0;
+            if(tbl.Rows.Count > 0)
+            {
+                DataRow r = tbl.Rows[0];
+                if (r[columname] != null && r[columname] is int)
+                {
+                    value = (int)r[columname];
+                }
+
+            }
+            return value;
+        }
+        public static string GetValueFromFirstRowAsString(DataTable tbl, string columname)
+        {
+            string value = "";
+            if (tbl.Rows.Count > 0)
+            {
+                DataRow r = tbl.Rows[0];
+                if (r[columname] != null && r[columname] is string)
+                {
+                    value =(string)r[columname];
+                }
+
+            }
+            return value;
         }
         public static void DebugPrintDataTable (DataTable dt)
         {
