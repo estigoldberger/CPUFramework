@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data;
 using System.Data.SqlClient;
 using System.Reflection;
@@ -6,7 +7,7 @@ using System.Runtime.CompilerServices;
 
 namespace CPUFramework
 {
-    public class bizObject : INotifyPropertyChanged
+    public class bizObject<T> : INotifyPropertyChanged where T:bizObject<T>, new()
     {
         string _typename = "";
         string _tablename = ""; string _getsproc = ""; string _updatesproc = ""; string _deletesproc = "";
@@ -39,6 +40,20 @@ namespace CPUFramework
             }
             _datatable = dt;
             return dt;
+        }
+        public List<T> GetList(bool includeblank=false)
+        {
+            
+
+            SqlCommand cmd = SQLUtility.GetSqlCommand(_getsproc);
+            SQLUtility.SetParameterValue(cmd, "@All", 1);
+            if (cmd.Parameters.Contains("@IncludeBlank"))
+            {
+                SQLUtility.SetParameterValue(cmd, "@IncludeBlank", includeblank);
+            }
+            var dt = SQLUtility.GetDataTable(cmd);
+
+            return GetListFromDataTable(dt);
         }
         private void LoadProps(DataRow dr)
         {
@@ -107,6 +122,18 @@ namespace CPUFramework
                 }
             }
         }
+        protected List<T> GetListFromDataTable(DataTable dt)
+        {
+            List<T> lst = new();
+            foreach (DataRow dr in dt.Rows)
+            {
+                T obj = new();
+                obj.LoadProps(dr);
+                lst.Add(obj);
+            }
+
+            return lst;
+        }
         private PropertyInfo? GetProp(string propname, bool forread, bool forwrite)
         {
             propname = propname.ToLower();
@@ -142,6 +169,7 @@ namespace CPUFramework
                 
             }
         }
+        protected string GetSprocName { get => _getsproc; }
         protected void InvokePropertyChanged([CallerMemberName] string propertyname = "")
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyname));
