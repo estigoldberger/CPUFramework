@@ -59,6 +59,7 @@ namespace CPUFramework
         {
             foreach (DataColumn col in dr.Table.Columns)
             {
+                
                 SetProp(col.ColumnName, dr[col.ColumnName]);
             }
         }
@@ -157,15 +158,17 @@ namespace CPUFramework
                 {
                     value = null;
                 }
-                try
-                {
-                    prop.SetValue(this, value);
-                }
-                catch(Exception ex)
-                {
-                    string msg = $"{_typename}.{prop.Name} is being set to {value?.ToString()} and that wrong data type. {ex.Message}";
-                    throw new CPUDevException(msg, ex);
-                }
+
+                    try
+                    {
+                        prop.SetValue(this, value);
+                    }
+                    catch (Exception ex)
+                    {
+                        string msg = $"{_typename}.{prop.Name} is being set to {value?.ToString()} and that wrong data type. {ex.Message}";
+                        throw new CPUDevException(msg, ex);
+                    }
+                
                 
             }
         }
